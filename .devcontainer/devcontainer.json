@@ -1,0 +1,8 @@
+// See https://containers.dev/implementors/json_reference/ for configuration reference
+{
+	"name": "fairfaxjuggler website",
+	"dockerFile": "dockerFile",
+    "forwardPorts": [4000, 35729],    
+    "runArgs": ["--name","fairfaxjuggler"],
+    "postStartCommand": "bundle install && bundle exec jekyll serve --baseurl='' --livereload --force_polling"
+}
