@@ -22,11 +22,9 @@
       <br>
       Location change based on room availability.<br>
       <ul>
-         <li>10/23 Richard Bryd library 7-9pm</li>
-         <li>10/30 George Mason regional library 7-9pm</li>
-         <li>11/6 George Mason regional library 7-9pm</li>
-         <li>11/13 George Mason regional library 7-9pm</li>
-         <li>11/20 George Mason regional library 7-9pm</li>
+      {% for meeting in site.data.meetings %}
+         <li>{{ meeting.date }} {{ meeting.location }} {{ meeting.time }}</li>
+      {% endfor %}
       </ul>
       <!---
       <br><br>
