@@ -1,11 +1,10 @@
 <nav>
-  <a href="/index.html"><img src="/images/logo.gif" width="150" height="188" alt="Fairfax Jugglers Logo" border="0"></a>
-  <br>
-  <br>
+  <a href="/index.html" class="desktop"><img src="/images/logo.gif" width="150" height="188" alt="Fairfax Jugglers Home" border="0"></a>
   <ul>
-  <li><a href="/meetings.html">Meetings</a><br><br></li>
-  <li><a href="/contacts.html">Contacts</a><br><br></li>
-  <li><a href="/links.html">Links</a><br><br></li>
-  <li><a href="/pictures.html">Pictures</a><br><br></li>
+  <li class="mobile {% if page.name == "index.html" %}active{% endif %}"><a href="/index.html">Home</a></li>
+  <li {% if page.name == "meetings.html" %}class="active"{% endif %}><a href="/meetings.html">Meetings</a></li>
+  <li {% if page.name == "contacts.html" %}class="active"{% endif %}><a href="/contacts.html">Contacts</a></li>
+  <li {% if page.name == "links.html" %}class="active"{% endif %}><a href="/links.html">Links</a></li>
+  <li {% if page.name == "pictures.html" %}class="active"{% endif %}><a href="/pictures.html">Pictures</a></li>
   </ul>
 </nav>
