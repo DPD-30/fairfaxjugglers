@@ -1,38 +1,31 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+---
+---
+<!DOCTYPE html>
 
 <html>
 <head>
 	<title>Fairfax Jugglers - Meetings</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+   <style>
+      {% include style.css %}
+   </style>
 </head>
 
-<body topmargin="0" leftmargin="0">
-<table border="0" width="100%" cellpadding="5" cellspacing="0" summary="Layout">
-   <tr>
-      <td width="10%" valign="top" nowrap="nowrap" bgcolor="#eeeeee">
-      <a href="index.html"><img src="images/logo.gif" width="150" height="188" alt="Fairfax Jugglers" border="0"></a>
-      <br><br>
-      <ul>
-      <li><a href="meetings.html">Meetings</a><br><br></li>
-      <li><a href="contacts.html">Contacts</a><br><br></li>
-      <li><a href="links.html">Links</a><br><br></li>
-      <li><a href="pictures.html">Pictures</a><br><br></li>
-      </ul>
-      </td>
-      <td valign="top">
+<body>
+  {% include sidebar.html %}
+   <main>
       <h1 align="center">Fairfax Jugglers</h1>
       <h2 align="center">Meetings</h2>
-      <p align="left">
+      <div style="text-align: left; max-width: 500px; margin: auto;">
       <h3>Club Meetings are held <br/>
       Thursdays, 7:00-9PM</h3>
       We are currently meeting at Fairfax county libraries.  
       <br>
       Location change based on room availability.<br>
       <ul>
-         <li>11/20 George Mason regional library 7-9pm</li>
-         <li>12/11 George Mason regional library 7-9pm</li>
-         <li>12/18 George Mason regional library 7-9pm</li>
-         <li>01/08/2026 George Mason regional library 7-9pm</li>
-         <li>01/15/2026 George Mason regional library 7-9pm</li>
+      {% for meeting in site.data.meetings %}
+         <li>{{ meeting.date }} {{ meeting.location }} {{ meeting.time }}</li>
+      {% endfor %}
       </ul>
       <!---
       <br><br>
@@ -65,9 +58,8 @@
       <img src="images/juggling_club_circus_club.png" width="518" height="367" alt="Map of Key with club locations marked" border="0">
       <br>
       <i>Specialized Google Map image courtesy of Doug Himes</i>
-      </p>
-      </td>
-   </tr>-->
-</table>
+      </p>-->
+      </div>
+   </main>
 </body>
 </html>
