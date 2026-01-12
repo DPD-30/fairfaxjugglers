@@ -17,15 +17,28 @@ def ensure_header(path, header):
 
 def append_row(path, row, header):
     ensure_header(path, header)
-    # Read headers to confirm order
+    # Read existing rows and drop any completely-empty rows
+    rows = []
     with open(path, newline='', encoding='utf-8') as f:
         reader = csv.reader(f)
-        existing = next(reader, None)
-    # Append row matching header length
+        for r in reader:
+            # consider a row empty if all fields are empty strings
+            if any(field.strip() for field in r):
+                rows.append(r)
+
+    # Ensure header is present as the first row
+    if not rows or [h for h in rows[0]] != header:
+        # replace rows with header if header missing
+        rows = [header] + [r for r in rows if r != header]
+
+    # Build new row matching header order
     out_row = [row.get(h, '') for h in header]
-    with open(path, 'a', newline='', encoding='utf-8') as f:
+
+    # Append the new row and write the file back without extraneous blank lines
+    rows.append(out_row)
+    with open(path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow(out_row)
+        writer.writerows(rows)
 
 
 def main():
