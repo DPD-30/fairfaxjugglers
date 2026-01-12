@@ -36,6 +36,10 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Purge past meetings
+        run: |
+          python3 scripts/add_meeting.py --purge-past
+
       - name: Run add_meeting script
         run: |
           python3 scripts/add_meeting.py --date "${{ inputs.date }}" --location "${{ inputs.location }}" --time "${{ inputs.time }}"
