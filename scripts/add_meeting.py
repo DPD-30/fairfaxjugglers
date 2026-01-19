@@ -92,14 +92,16 @@ def main():
     parser = argparse.ArgumentParser(description='Append a meeting entry to _data/meetings.csv')
     parser.add_argument('--date', required=False, help='Date string for the meeting (e.g. 01/15/2026)')
     parser.add_argument('--location', default='', help='Location or note for the meeting')
+    parser.add_argument('--address', default='', help='Address for the meeting')
     parser.add_argument('--time', default='', help='Time for the meeting (e.g. 7-9pm)')
     parser.add_argument('--purge-past', action='store_true', help='Remove meetings dated before today (creates .bak)')
     args = parser.parse_args()
 
-    header = ['date', 'location', 'time']
+    header = ['date', 'location', 'address', 'time']
     entry = {
         'date': args.date,
         'location': args.location,
+        'address': args.address,
         'time': args.time,
     }
 

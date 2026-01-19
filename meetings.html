@@ -24,7 +24,7 @@
       Location change based on room availability.<br>
       <ul>
       {% for meeting in site.data.meetings %}
-         <li>{{ meeting.date }} {{ meeting.location }} {{ meeting.time }}</li>
+         <li><b>{{ meeting.date }} {{ meeting.time }}, {{ meeting.location }}</b> <br> {{meeting.address}} </li>
       {% endfor %}
       </ul>
       <!---

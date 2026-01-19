@@ -13,6 +13,10 @@ on:
         description: 'Location or note (optional)'
         required: false
         default: 'George Mason Regional Library'
+      address:
+        description: 'Address (optional)'
+        required: false
+        default: '7001 Little River Turnpike, Annandale, VA 22003'
       time:
         description: 'Time (optional)'
         required: false
@@ -42,7 +46,7 @@ jobs:
 
       - name: Run add_meeting script
         run: |
-          python3 scripts/add_meeting.py --date "${{ inputs.date }}" --location "${{ inputs.location }}" --time "${{ inputs.time }}"
+          python3 scripts/add_meeting.py --date "${{ inputs.date }}" --location "${{ inputs.location }}" --address "${{ inputs.address }}" --time "${{ inputs.time }}"
 
       - name: Commit and push changes
         env:
