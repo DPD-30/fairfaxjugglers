@@ -109,14 +109,28 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     if address:
         calendar_location = f"{location}, {address}"
     
-    # Parse date and create datetimes in America/New_York timezone
+    # Parse date and convert to UTC range for the day in America/New_York timezone
+    # Eastern Time is UTC-5 (EST) or UTC-4 (EDT)
+    # For February, it's EST (UTC-5), so:
+    # 02/05/2026 00:00:00 EST = 02/05/2026 05:00:00 UTC
+    # 02/05/2026 23:59:59 EST = 02/06/2026 04:59:59 UTC
     date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
-    start_of_day = datetime(date_obj.year, date_obj.month, date_obj.day, 0, 0, 0)
-    end_of_day = datetime(date_obj.year, date_obj.month, date_obj.day, 23, 59, 59)
+    
+    # Calculate day start and end in UTC by accounting for EST/EDT
+    # Check if it's EDT (roughly March-November) or EST (November-March)
+    is_dst = date_obj.month > 3 and date_obj.month < 11
+    offset_hours = 4 if is_dst else 5  # EDT is UTC-4, EST is UTC-5
+    
+    # Day start in EST/EDT becomes this hour in UTC
+    start_of_day_utc = datetime(date_obj.year, date_obj.month, date_obj.day, offset_hours, 0, 0)
+    # Day end in EST/EDT
+    end_of_day_utc = datetime(date_obj.year, date_obj.month, date_obj.day + 1, offset_hours - 1, 59, 59)
+    if end_of_day_utc.day > 28:  # Simple overflow check for month boundaries
+        end_of_day_utc = datetime(date_obj.year, date_obj.month + 1, 1, offset_hours - 1, 59, 59)
     
     # Convert to RFC3339 format with Z suffix for UTC
-    start_str = start_of_day.isoformat() + 'Z'
-    end_str = end_of_day.isoformat() + 'Z'
+    start_str = start_of_day_utc.isoformat() + 'Z'
+    end_str = end_of_day_utc.isoformat() + 'Z'
     
     # Search for events on this date with the matching ID in extendedProperties
     events_result = service.events().list(
@@ -124,12 +138,12 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
         timeMin=start_str,
         timeMax=end_str,
         singleEvents=True,
-        maxResults=50,
-        timeZone='America/New_York'
+        maxResults=50
     ).execute()
     
     events = events_result.get('items', [])
     print(f'DEBUG: Checking for meeting on {meeting_date}, looking for ID: {meeting_id}')
+    print(f'DEBUG: Query range: {start_str} to {end_str}')
     print(f'DEBUG: Found {len(events)} events on this date')
     
     for event in events:
