@@ -109,14 +109,15 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     if address:
         calendar_location = f"{location}, {address}"
     
-    # Parse date and create timezone-aware datetimes
+    # Parse date and create datetimes in America/New_York timezone
     date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
     start_of_day = datetime(date_obj.year, date_obj.month, date_obj.day, 0, 0, 0)
     end_of_day = datetime(date_obj.year, date_obj.month, date_obj.day, 23, 59, 59)
     
-    # Convert to RFC3339 with Z suffix for UTC
-    start_str = start_of_day.isoformat() + 'Z'
-    end_str = end_of_day.isoformat() + 'Z'
+    # Convert to RFC3339 format (Google Calendar API expects this format)
+    # Use the same timezone as events are created in
+    start_str = start_of_day.isoformat()
+    end_str = end_of_day.isoformat()
     
     # Search for events on this date with the matching ID in extendedProperties
     events_result = service.events().list(
@@ -124,7 +125,8 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
         timeMin=start_str,
         timeMax=end_str,
         singleEvents=True,
-        maxResults=50
+        maxResults=50,
+        timeZone='America/New_York'
     ).execute()
     
     events = events_result.get('items', [])
