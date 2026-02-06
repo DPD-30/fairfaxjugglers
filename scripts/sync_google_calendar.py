@@ -128,17 +128,38 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     ).execute()
     
     events = events_result.get('items', [])
+    print(f'DEBUG: Checking for meeting on {meeting_date}, looking for ID: {meeting_id}')
+    print(f'DEBUG: Found {len(events)} events on this date')
+    
     for event in events:
         # Check for matching sync ID (primary method)
         event_props = event.get('extendedProperties', {}).get('private', {})
-        if event_props.get('meeting_sync_id') == meeting_id:
+        event_sync_id = event_props.get('meeting_sync_id', '')
+        print(f'DEBUG: Event "{event.get("summary")}" has sync ID: {event_sync_id}')
+        
+        if event_sync_id == meeting_id:
+            print(f'DEBUG: Found matching sync ID!')
             return True
         
         # Fallback: check for matching location and summary (for events created before sync ID was added)
-        if (event.get('summary') == 'Fairfax Jugglers Meeting' and 
-            event.get('location') == calendar_location):
-            return True
+        event_summary = event.get('summary', '')
+        event_location = event.get('location', '')
+        
+        if event_summary == 'Fairfax Jugglers Meeting':
+            # Check for exact location match
+            if event_location == calendar_location:
+                print(f'DEBUG: Found matching location (exact)')
+                return True
+            # Check if event location contains just the location name (for old events)
+            if event_location == location:
+                print(f'DEBUG: Found matching location (name only)')
+                return True
+            # Check if event location contains the address (handles variations)
+            if address and address in event_location:
+                print(f'DEBUG: Found matching location (address match)')
+                return True
     
+    print(f'DEBUG: No matching event found')
     return False
 
 
