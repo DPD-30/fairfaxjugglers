@@ -16,6 +16,7 @@ import sys
 import csv
 import json
 import base64
+import hashlib
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 from google.auth.transport.requests import Request
@@ -92,26 +93,37 @@ def read_meetings_from_csv():
     return meetings
 
 
+def generate_meeting_id(meeting_date, location, address):
+    """Generate a unique ID for a meeting based on date, location, and address."""
+    meeting_key = f"{meeting_date}_{location}_{address}"
+    return hashlib.md5(meeting_key.encode()).hexdigest()
+
+
 def meeting_exists(service, calendar_id, meeting_date, location, address):
-    """Check if a meeting already exists in the calendar."""
+    """Check if a meeting already exists in the calendar using extendedProperties."""
     try:
         date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
         start_of_day = date_obj.isoformat() + 'T00:00:00'
         end_of_day = date_obj.isoformat() + 'T23:59:59'
         
-        # Search for events on this date at this location
-        search_query = f"{location} {address}"
+        # Generate the unique meeting ID
+        meeting_id = generate_meeting_id(meeting_date, location, address)
+        
+        # Search for events on this date with the matching ID in extendedProperties
         events_result = service.events().list(
             calendarId=calendar_id,
             timeMin=start_of_day,
             timeMax=end_of_day,
-            q=search_query,
             singleEvents=True,
-            maxResults=10
+            maxResults=50
         ).execute()
         
         events = events_result.get('items', [])
-        return len(events) > 0
+        for event in events:
+            event_props = event.get('extendedProperties', {}).get('private', {})
+            if event_props.get('meeting_sync_id') == meeting_id:
+                return True
+        return False
     except Exception as e:
         print(f'Error checking if event exists: {e}')
         return False
@@ -147,6 +159,9 @@ def add_meeting_to_calendar(service, calendar_id, meeting):
         if address:
             calendar_location = f"{location}, {address}"
         
+        # Generate unique meeting ID
+        meeting_id = generate_meeting_id(meeting_date, location, address)
+        
         # Create event
         event = {
             'summary': 'Fairfax Jugglers Meeting',
@@ -166,6 +181,9 @@ def add_meeting_to_calendar(service, calendar_id, meeting):
                     {'method': 'email', 'minutes': 24 * 60},  # 1 day before
                     {'method': 'popup', 'minutes': 60},  # 1 hour before
                 ],
+            },
+            'extendedProperties': {
+                'private': {'meeting_sync_id': meeting_id}
             },
         }
         
