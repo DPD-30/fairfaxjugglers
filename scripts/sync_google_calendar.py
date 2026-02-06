@@ -103,8 +103,8 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     """Check if a meeting already exists in the calendar using extendedProperties."""
     try:
         date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
-        start_of_day = date_obj.isoformat() + 'T00:00:00'
-        end_of_day = date_obj.isoformat() + 'T23:59:59'
+        start_of_day = date_obj.date().isoformat() + 'T00:00:00'
+        end_of_day = date_obj.date().isoformat() + 'T23:59:59'
         
         # Generate the unique meeting ID
         meeting_id = generate_meeting_id(meeting_date, location, address)
