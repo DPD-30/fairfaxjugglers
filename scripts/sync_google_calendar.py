@@ -101,104 +101,100 @@ def generate_meeting_id(meeting_date, location, address):
 
 def meeting_exists(service, calendar_id, meeting_date, location, address):
     """Check if a meeting already exists in the calendar using extendedProperties."""
-    try:
-        date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
-        start_of_day = date_obj.date().isoformat() + 'T00:00:00'
-        end_of_day = date_obj.date().isoformat() + 'T23:59:59'
-        
-        # Generate the unique meeting ID
-        meeting_id = generate_meeting_id(meeting_date, location, address)
-        
-        # Search for events on this date with the matching ID in extendedProperties
-        events_result = service.events().list(
-            calendarId=calendar_id,
-            timeMin=start_of_day,
-            timeMax=end_of_day,
-            singleEvents=True,
-            maxResults=50
-        ).execute()
-        
-        events = events_result.get('items', [])
-        for event in events:
-            event_props = event.get('extendedProperties', {}).get('private', {})
-            if event_props.get('meeting_sync_id') == meeting_id:
-                return True
-        return False
-    except Exception as e:
-        print(f'Error checking if event exists: {e}')
-        return False
+    # Generate the unique meeting ID
+    meeting_id = generate_meeting_id(meeting_date, location, address)
+    
+    # Parse date and create timezone-aware datetimes
+    date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
+    start_of_day = datetime(date_obj.year, date_obj.month, date_obj.day, 0, 0, 0)
+    end_of_day = datetime(date_obj.year, date_obj.month, date_obj.day, 23, 59, 59)
+    
+    # Convert to RFC3339 with Z suffix for UTC
+    start_str = start_of_day.isoformat() + 'Z'
+    end_str = end_of_day.isoformat() + 'Z'
+    
+    # Search for events on this date with the matching ID in extendedProperties
+    events_result = service.events().list(
+        calendarId=calendar_id,
+        timeMin=start_str,
+        timeMax=end_str,
+        singleEvents=True,
+        maxResults=50
+    ).execute()
+    
+    events = events_result.get('items', [])
+    for event in events:
+        event_props = event.get('extendedProperties', {}).get('private', {})
+        if event_props.get('meeting_sync_id') == meeting_id:
+            return True
+    return False
 
 
 def add_meeting_to_calendar(service, calendar_id, meeting):
     """Add a meeting to Google Calendar."""
-    try:
-        meeting_date = meeting.get('date', '')
-        location = meeting.get('location', '')
-        address = meeting.get('address', '')
-        time_range = meeting.get('time', '')
-        
-        # Skip if already exists
-        if meeting_exists(service, calendar_id, meeting_date, location, address):
-            print(f'Meeting already exists: {meeting_date} at {location}')
-            return False
-        
-        # Parse date and time
-        date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
-        start_time, end_time = parse_time_range(time_range)
-        
-        if not start_time or not end_time:
-            print(f'Warning: Could not parse time "{time_range}" for {meeting_date}')
-            start_time = start_time or datetime.strptime('19:00', '%H:%M').time()
-            end_time = end_time or datetime.strptime('21:00', '%H:%M').time()
-        
-        start_datetime = datetime.combine(date_obj.date(), start_time)
-        end_datetime = datetime.combine(date_obj.date(), end_time)
-        
-        # Combine location and address for the calendar event
-        calendar_location = location
-        if address:
-            calendar_location = f"{location}, {address}"
-        
-        # Generate unique meeting ID
-        meeting_id = generate_meeting_id(meeting_date, location, address)
-        
-        # Create event
-        event = {
-            'summary': 'Fairfax Jugglers Meeting',
-            'location': calendar_location,
-            'description': 'Fairfax Jugglers Meetup',
-            'start': {
-                'dateTime': start_datetime.isoformat(),
-                'timeZone': 'America/New_York',
-            },
-            'end': {
-                'dateTime': end_datetime.isoformat(),
-                'timeZone': 'America/New_York',
-            },
-            'reminders': {
-                'useDefault': False,
-                'overrides': [
-                    {'method': 'email', 'minutes': 24 * 60},  # 1 day before
-                    {'method': 'popup', 'minutes': 60},  # 1 hour before
-                ],
-            },
-            'extendedProperties': {
-                'private': {'meeting_sync_id': meeting_id}
-            },
-        }
-        
-        created_event = service.events().insert(
-            calendarId=calendar_id,
-            body=event
-        ).execute()
-        
-        print(f'Created event: {meeting_date} at {calendar_location}')
-        print(f'Event ID: {created_event.get("id")}')
-        return True
+    meeting_date = meeting.get('date', '')
+    location = meeting.get('location', '')
+    address = meeting.get('address', '')
+    time_range = meeting.get('time', '')
     
-    except Exception as e:
-        print(f'Error adding meeting to calendar: {e}')
+    # Skip if already exists
+    if meeting_exists(service, calendar_id, meeting_date, location, address):
+        print(f'Meeting already exists: {meeting_date} at {location}')
         return False
+    
+    # Parse date and time
+    date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
+    start_time, end_time = parse_time_range(time_range)
+    
+    if not start_time or not end_time:
+        print(f'Warning: Could not parse time "{time_range}" for {meeting_date}')
+        start_time = start_time or datetime.strptime('19:00', '%H:%M').time()
+        end_time = end_time or datetime.strptime('21:00', '%H:%M').time()
+    
+    start_datetime = datetime.combine(date_obj.date(), start_time)
+    end_datetime = datetime.combine(date_obj.date(), end_time)
+    
+    # Combine location and address for the calendar event
+    calendar_location = location
+    if address:
+        calendar_location = f"{location}, {address}"
+    
+    # Generate unique meeting ID
+    meeting_id = generate_meeting_id(meeting_date, location, address)
+    
+    # Create event
+    event = {
+        'summary': 'Fairfax Jugglers Meeting',
+        'location': calendar_location,
+        'description': 'Fairfax Jugglers Meetup',
+        'start': {
+            'dateTime': start_datetime.isoformat(),
+            'timeZone': 'America/New_York',
+        },
+        'end': {
+            'dateTime': end_datetime.isoformat(),
+            'timeZone': 'America/New_York',
+        },
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'email', 'minutes': 24 * 60},  # 1 day before
+                {'method': 'popup', 'minutes': 60},  # 1 hour before
+            ],
+        },
+        'extendedProperties': {
+            'private': {'meeting_sync_id': meeting_id}
+        },
+    }
+    
+    created_event = service.events().insert(
+        calendarId=calendar_id,
+        body=event
+    ).execute()
+    
+    print(f'Created event: {meeting_date} at {calendar_location}')
+    print(f'Event ID: {created_event.get("id")}')
+    return True
 
 
 def main():
