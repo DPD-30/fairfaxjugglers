@@ -100,9 +100,14 @@ def generate_meeting_id(meeting_date, location, address):
 
 
 def meeting_exists(service, calendar_id, meeting_date, location, address):
-    """Check if a meeting already exists in the calendar using extendedProperties."""
+    """Check if a meeting already exists in the calendar using extendedProperties or fallback matching."""
     # Generate the unique meeting ID
     meeting_id = generate_meeting_id(meeting_date, location, address)
+    
+    # Parse date and time to build the calendar location string
+    calendar_location = location
+    if address:
+        calendar_location = f"{location}, {address}"
     
     # Parse date and create timezone-aware datetimes
     date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
@@ -124,9 +129,16 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     
     events = events_result.get('items', [])
     for event in events:
+        # Check for matching sync ID (primary method)
         event_props = event.get('extendedProperties', {}).get('private', {})
         if event_props.get('meeting_sync_id') == meeting_id:
             return True
+        
+        # Fallback: check for matching location and summary (for events created before sync ID was added)
+        if (event.get('summary') == 'Fairfax Jugglers Meeting' and 
+            event.get('location') == calendar_location):
+            return True
+    
     return False
 
 
