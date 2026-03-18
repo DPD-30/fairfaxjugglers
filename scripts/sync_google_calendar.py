@@ -115,7 +115,8 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     # 02/05/2026 00:00:00 EST = 02/05/2026 05:00:00 UTC
     # 02/05/2026 23:59:59 EST = 02/06/2026 04:59:59 UTC
     date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
-    
+    print(f'DEBUG: raw date: {meeting_date} - datetime.strptime(meeting_date, %m/%d/%Y)  {meeting_date}')
+   
     # Calculate day start and end in UTC by accounting for EST/EDT
     # Check if it's EDT (roughly March-November) or EST (November-March)
     is_dst = date_obj.month > 3 and date_obj.month < 11
