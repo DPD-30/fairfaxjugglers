@@ -20,6 +20,7 @@ import hashlib
 from datetime import datetime, time
 import traceback
 from zoneinfo import ZoneInfo
+from datetime import timedelta
 from google.oauth2.service_account import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -51,32 +52,55 @@ def get_calendar_service():
 
 
 def parse_time_range(time_str):
-    """Parse time range string like '7-9pm' into start and end times."""
-    time_str = time_str.strip()
-    
-    if '-' not in time_str:
-        return None, None
-    
-    parts = time_str.split('-')
-    if len(parts) != 2:
-        return None, None
-    
-    start_str = parts[0].strip()
-    end_str = parts[1].strip()
-    
-    # Handle AM/PM
-    if 'pm' in end_str.lower() or 'am' in end_str.lower():
-        meridiem = end_str[-2:].lower()
-        if 'pm' not in start_str.lower() and 'am' not in start_str.lower():
-            start_str += meridiem
-    
-    try:
-        start_time = datetime.strptime(start_str, '%I%p').time()
-        end_time = datetime.strptime(end_str, '%I%p').time()
-        return start_time, end_time
-    except ValueError:
-        return None, None
+    """
+    Parse time ranges like:
+    - '7-9pm'
+    - '11am-11pm'
+    - '7:30pm-9:15pm'
+    - '7pm-1am' (overnight)
+    """
 
+    if not time_str:
+        raise ValueError("Empty time string")
+
+    original = time_str
+    time_str = time_str.strip().lower().replace(" ", "")
+
+    if '-' not in time_str:
+        raise ValueError(f"Invalid time range format: '{original}'")
+
+    start_str, end_str = time_str.split('-', 1)
+
+    def normalize(t, fallback_meridiem=None):
+        """Ensure time has am/pm and minutes."""
+        if 'am' not in t and 'pm' not in t:
+            if not fallback_meridiem:
+                raise ValueError(f"Missing am/pm in '{original}'")
+            t += fallback_meridiem
+
+        # Add :00 if missing minutes
+        if ':' not in t:
+            t = t.replace('am', ':00am').replace('pm', ':00pm')
+
+        return t
+
+    # Determine fallback meridiem from end time
+    fallback_meridiem = None
+    if 'am' in end_str:
+        fallback_meridiem = 'am'
+    elif 'pm' in end_str:
+        fallback_meridiem = 'pm'
+
+    start_str = normalize(start_str, fallback_meridiem)
+    end_str = normalize(end_str)
+
+    try:
+        start_time = datetime.strptime(start_str, '%I:%M%p').time()
+        end_time = datetime.strptime(end_str, '%I:%M%p').time()
+    except Exception as e:
+        raise ValueError(f"Failed to parse time '{original}': {e}")
+
+    return start_time, end_time
 
 def read_meetings_from_csv():
     """Read meetings from CSV file."""
@@ -201,7 +225,10 @@ def add_meeting_to_calendar(service, calendar_id, meeting):
     
     start_datetime = datetime.combine(date_obj.date(), start_time)
     end_datetime = datetime.combine(date_obj.date(), end_time)
-    
+    # Handle overnight events (e.g., 7pm–1am)
+    if end_datetime <= start_datetime:
+        end_datetime += timedelta(days=1)
+
     # Combine location and address for the calendar event
     calendar_location = location
     if address:
