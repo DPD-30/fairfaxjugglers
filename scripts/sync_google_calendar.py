@@ -234,15 +234,15 @@ def add_meeting_to_calendar(service, calendar_id, meeting):
             'private': {'meeting_sync_id': meeting_id}
         },
     }
-    """
+    
     created_event = service.events().insert(
         calendarId=calendar_id,
         body=event
     ).execute()
-    """
+    
     
     print(f'Created event: {meeting_date} at {calendar_location}')
-    """print(f'Event ID: {created_event.get("id")}')"""
+    print(f'Event ID: {created_event.get("id")}')
     return True
 
 
