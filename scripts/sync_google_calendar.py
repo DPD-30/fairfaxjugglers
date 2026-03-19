@@ -242,7 +242,7 @@ def add_meeting_to_calendar(service, calendar_id, meeting):
     """
     
     print(f'Created event: {meeting_date} at {calendar_location}')
-    print(f'Event ID: {created_event.get("id")}')
+    """print(f'Event ID: {created_event.get("id")}')"""
     return True
 
 
