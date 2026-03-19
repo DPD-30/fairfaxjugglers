@@ -17,7 +17,7 @@ import csv
 import json
 import base64
 import hashlib
-from datetime import datetime
+from datetime import datetime, time
 import time
 import traceback
 from google.oauth2.service_account import Credentials
@@ -122,10 +122,6 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     date_obj = datetime.strptime(meeting_date, '%m/%d/%Y')
     print(f'DEBUG: raw date: {meeting_date} - datetime.strptime(meeting_date, %m/%d/%Y)  {meeting_date}')
    
-    # Calculate day start and end in UTC by accounting for EST/EDT
-    # Check if it's EDT (roughly March-November) or EST (November-March)
-    is_dst = date_obj.month > 3 and date_obj.month < 11
-    offset_hours = 4 if is_dst else 5  # EDT is UTC-4, EST is UTC-5
     
     # Day start in EST/EDT becomes this hour in UTC
         # Day start in EST/EDT becomes this hour in UTC
@@ -238,11 +234,12 @@ def add_meeting_to_calendar(service, calendar_id, meeting):
             'private': {'meeting_sync_id': meeting_id}
         },
     }
-    
+    """
     created_event = service.events().insert(
         calendarId=calendar_id,
         body=event
     ).execute()
+    """
     
     print(f'Created event: {meeting_date} at {calendar_location}')
     print(f'Event ID: {created_event.get("id")}')
