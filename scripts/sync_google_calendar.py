@@ -18,6 +18,8 @@ import json
 import base64
 import hashlib
 from datetime import datetime
+import time
+import traceback
 from google.oauth2.service_account import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -103,7 +105,10 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     """Check if a meeting already exists in the calendar using extendedProperties or fallback matching."""
     # Generate the unique meeting ID
     meeting_id = generate_meeting_id(meeting_date, location, address)
-    
+    target_timezone = "America/New_York"
+    # Create a timezone object
+    tz = ZoneInfo(target_timezone)
+   
     # Parse date and time to build the calendar location string
     calendar_location = location
     if address:
@@ -123,12 +128,10 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     offset_hours = 4 if is_dst else 5  # EDT is UTC-4, EST is UTC-5
     
     # Day start in EST/EDT becomes this hour in UTC
-    start_of_day_utc = datetime(date_obj.year, date_obj.month, date_obj.day, offset_hours, 0, 0)
+        # Day start in EST/EDT becomes this hour in UTC
+    start_of_day_utc = datetime.combine(date_obj, time(0,0,0), tzinfo=tz) 
     # Day end in EST/EDT
-    end_of_day_utc = datetime(date_obj.year, date_obj.month, date_obj.day + 1, offset_hours - 1, 59, 59)
-    if end_of_day_utc.day > 28:  # Simple overflow check for month boundaries
-        end_of_day_utc = datetime(date_obj.year, date_obj.month + 1, 1, offset_hours - 1, 59, 59)
-    
+    end_of_day_utc = datetime.combine(date_obj, time.max, tzinfo=tz) 
     # Convert to RFC3339 format with Z suffix for UTC
     start_str = start_of_day_utc.isoformat() + 'Z'
     end_str = end_of_day_utc.isoformat() + 'Z'
@@ -270,6 +273,7 @@ def main():
     
     except Exception as e:
         print(f'Error: {e}')
+        traceback.print_exc()
         sys.exit(1)
 
 
