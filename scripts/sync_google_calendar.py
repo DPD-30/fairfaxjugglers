@@ -129,8 +129,8 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
     # Day end in EST/EDT
     end_of_day_utc = datetime.combine(date_obj, time.max, tzinfo=tz) 
     # Convert to RFC3339 format with Z suffix for UTC
-    start_str = start_of_day_utc.isoformat() + 'Z'
-    end_str = end_of_day_utc.isoformat() + 'Z'
+    start_str = start_of_day_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+    end_str = end_of_day_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
     
     # Search for events on this date with the matching ID in extendedProperties
     events_result = service.events().list(
