@@ -179,24 +179,6 @@ def meeting_exists(service, calendar_id, meeting_date, location, address):
         if event_sync_id == meeting_id:
             print(f'DEBUG: Found matching sync ID!')
             return True
-        
-        # Fallback: check for matching location and summary (for events created before sync ID was added)
-        event_summary = event.get('summary', '')
-        event_location = event.get('location', '')
-        
-        if event_summary == 'Fairfax Jugglers Meeting':
-            # Check for exact location match
-            if event_location == calendar_location:
-                print(f'DEBUG: Found matching location (exact)')
-                return True
-            # Check if event location contains just the location name (for old events)
-            if event_location == location:
-                print(f'DEBUG: Found matching location (name only)')
-                return True
-            # Check if event location contains the address (handles variations)
-            if address and address in event_location:
-                print(f'DEBUG: Found matching location (address match)')
-                return True
     
     print(f'DEBUG: No matching event found')
     return False
@@ -223,8 +205,12 @@ def add_meeting_to_calendar(service, calendar_id, meeting):
         start_time = start_time or datetime.strptime('19:00', '%H:%M').time()
         end_time = end_time or datetime.strptime('21:00', '%H:%M').time()
     
-    start_datetime = datetime.combine(date_obj.date(), start_time)
-    end_datetime = datetime.combine(date_obj.date(), end_time)
+    target_timezone = "America/New_York"
+    # Create a timezone object
+    tz = ZoneInfo(target_timezone)
+
+    start_datetime = datetime.combine(date_obj.date(), start_time, tzinfo=tz)
+    end_datetime = datetime.combine(date_obj.date(), end_time, tzinfo=tz)
     # Handle overnight events (e.g., 7pm–1am)
     if end_datetime <= start_datetime:
         end_datetime += timedelta(days=1)
